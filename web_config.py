@@ -137,7 +137,7 @@ TEMPLATE = """
         <p class="subtitle">Configure your departure display</p>
 
         {% if saved %}
-        <div class="saved">Settings saved. Restart the tracker to apply changes.</div>
+        <div class="saved">Settings saved. Changes will apply automatically on the next data refresh. Display hardware settings (brightness, GPIO, HAT PWM) still require a restart.</div>
         {% endif %}
 
         <form method="post">
