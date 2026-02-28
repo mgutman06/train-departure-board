@@ -175,6 +175,30 @@ sudo systemctl status TrainTracker.service
 journalctl -u TrainTracker.service -f
 ```
 
+## Web Configuration UI
+
+A built-in web interface lets you update settings from any device on your network - no SSH required.
+
+### Running the web UI
+
+```bash
+cd /home/pi/TrainTracker
+env/bin/python3 web_config.py
+```
+
+Then open `http://<your-pi-ip>:5000` in a browser. From there you can change:
+
+- Station code
+- API username and password
+- Display brightness and GPIO settings
+- Refresh interval and departure limits
+
+After saving, restart the tracker for changes to take effect:
+
+```bash
+sudo systemctl restart TrainTracker.service
+```
+
 ## Optional
 
 ### Loading LED
