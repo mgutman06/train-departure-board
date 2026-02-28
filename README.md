@@ -57,7 +57,7 @@ sudo ./demo --led-rows=32 --led-cols=64 -D0
 
 ```bash
 cd /home/pi/
-git clone https://github.com/mgutman06/FlightTracker trainline
+git clone https://github.com/mgutman06/train-departure-board trainline
 cd /home/pi/trainline
 python3 -m venv env
 source env/bin/activate

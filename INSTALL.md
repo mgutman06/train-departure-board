@@ -201,7 +201,7 @@ the `GPIO_SLOWDOWN` setting.
 
 ```bash
 cd /home/pi
-git clone https://github.com/mgutman06/FlightTracker trainline
+git clone https://github.com/mgutman06/train-departure-board trainline
 cd trainline
 ```
 
