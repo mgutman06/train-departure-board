@@ -1,67 +1,51 @@
 import sys
-import time
 from setup import frames
 from utilities.animator import Animator
-from utilities.overhead import Overhead
-#from config_loader import load_config
-from scenes.weather import WeatherScene
-from scenes.flightdetails import FlightDetailsScene
-from scenes.journey import JourneyScene
+from utilities.trains import Departures
+from scenes.destination import DestinationScene
+from scenes.departureinfo import DepartureInfoScene
+from scenes.callingpoints import CallingPointsScene
 from scenes.loadingpulse import LoadingPulseScene
 from scenes.loadingled import LoadingLEDScene
-from scenes.clock import ClockScene
-from scenes.planedetails import PlaneDetailsScene
-from scenes.day import DayScene
-from scenes.date import DateScene
-from scenes.plane_idle import PlaneIdleScene
+from scenes.trainidle import TrainIdleScene
 from rgbmatrix import graphics
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 
-def callsigns_match(flights_a, flights_b):
-    get_callsigns = lambda flights: [f["callsign"] for f in flights]
-    callsigns_a = set(get_callsigns(flights_a))
-    callsigns_b = set(get_callsigns(flights_b))
-
-    return callsigns_a == callsigns_b
+def services_match(services_a, services_b):
+    """Check if two service lists contain the same departures."""
+    get_ids = lambda services: [
+        f"{s['scheduled']}-{s['destination']}" for s in services
+    ]
+    return set(get_ids(services_a)) == set(get_ids(services_b))
 
 
 try:
-    # Attempt to load config data
-    from config import (
-        BRIGHTNESS,
-        GPIO_SLOWDOWN,
-        HAT_PWM_ENABLED
-    )
-
+    from config import BRIGHTNESS, GPIO_SLOWDOWN, HAT_PWM_ENABLED
 except (ModuleNotFoundError, NameError):
-    # If there's no config data
     BRIGHTNESS = 100
-    GPIO_SLOWDOWN = 2
-    HAT_PWM_ENABLED = True
+    GPIO_SLOWDOWN = 4
+    HAT_PWM_ENABLED = False
 
 try:
-    # Attempt to load experimental config data
     from config import LOADING_LED_ENABLED
-
 except (ModuleNotFoundError, NameError, ImportError):
-    # If there's no experimental config data
-     LOADING_LED_ENABLED = False
+    LOADING_LED_ENABLED = False
+
+try:
+    from config import REFRESH_INTERVAL
+except (ModuleNotFoundError, NameError, ImportError):
+    REFRESH_INTERVAL = 60
 
 
 class Display(
-   # WeatherScene,
-    FlightDetailsScene,
-    JourneyScene,
-    LoadingLEDScene if LOADING_LED_ENABLED else LoadingPulseScene ,
-    PlaneDetailsScene,
-    # ClockScene,
-    # DayScene,
-    # DateScene,
-    PlaneIdleScene,
+    DestinationScene,
+    DepartureInfoScene,
+    CallingPointsScene,
+    LoadingLEDScene if LOADING_LED_ENABLED else LoadingPulseScene,
+    TrainIdleScene,
     Animator,
 ):
-
     def __init__(self):
         # Setup Display
         options = RGBMatrixOptions()
@@ -73,17 +57,16 @@ class Display(
         options.row_address_type = 0
         options.multiplexing = 0
         options.pwm_bits = 11
-        options.brightness = BRIGHTNESS #0
+        options.brightness = BRIGHTNESS
         options.pwm_lsb_nanoseconds = 50
         options.led_rgb_sequence = "RGB"
         options.pixel_mapper_config = ""
         options.show_refresh_rate = 0
-        options.gpio_slowdown = 4  #GPIO_SLOWDOWN
-        options.disable_hardware_pulsing = True
+        options.gpio_slowdown = GPIO_SLOWDOWN
+        options.disable_hardware_pulsing = not HAT_PWM_ENABLED
         options.drop_privileges = True
-       # options.limit_refresh_rate_hz = 160
         self.matrix = RGBMatrix(options=options)
-  
+
         # Setup canvas
         self.canvas = self.matrix.CreateFrameCanvas()
         self.canvas.Clear()
@@ -91,12 +74,13 @@ class Display(
         # Data to render
         self._data_index = 0
         self._data = []
+        self._station_name = ""
 
-        # Start Looking for planes
-        self.overhead = Overhead()
-        self.overhead.grab_data()
+        # Start fetching train departures
+        self.departures = Departures()
+        self.departures.grab_data()
 
-        # Initalise animator and scenes
+        # Initialise animator and scenes
         super().__init__()
 
         # Overwrite any default settings from
@@ -109,37 +93,23 @@ class Display(
 
     @Animator.KeyFrame.add(0)
     def clear_screen(self):
-        # First operation after
-        # a screen reset
         self.canvas.Clear()
 
     @Animator.KeyFrame.add(frames.PER_SECOND * 4)
     def check_for_loaded_data(self, count):
-        if self.overhead.new_data:
-            # Check if there's data
-            there_is_data = len(self._data) > 0 or not self.overhead.data_is_empty
+        if self.departures.new_data:
+            there_is_data = len(self._data) > 0 or not self.departures.data_is_empty
 
-            # this marks self.overhead.data as no longer new
-            new_data = self.overhead.data
-	   # 🔽 Filter to only include planes with full flight plans
-            def has_full_flightplan(f):
-                return bool(f.get("callsign")) and bool(f.get("origin")) and  bool(f.get("destination"))
+            new_data = self.departures.data
+            self._station_name = self.departures.station_name
 
-            new_data = [f for f in new_data if has_full_flightplan(f)]
-            # See if this matches the data already on the screen
-            # This test only checks if it's 2 lists with the same
-            # callsigns, regardless or order
-            data_is_different = not callsigns_match(self._data, new_data)
+            data_is_different = not services_match(self._data, new_data)
 
             if data_is_different:
                 self._data_index = 0
                 self._data_all_looped = False
                 self._data = new_data
 
-            # Only reset if there's flight data already
-            # on the screen, of if there's some new
-            # data available to draw which is different
-            # from the current data
             reset_required = there_is_data and data_is_different
 
             if reset_required:
@@ -147,31 +117,19 @@ class Display(
 
     @Animator.KeyFrame.add(1)
     def sync(self, count):
-        # Redraw screen every frame
         _ = self.matrix.SwapOnVSync(self.canvas)
 
-    @Animator.KeyFrame.add(frames.PER_SECOND * 30)
+    @Animator.KeyFrame.add(frames.PER_SECOND * REFRESH_INTERVAL)
     def grab_new_data(self, count):
-        # Only grab data if we're not already searching
-        # for planes, or if there's new data available
-        # which hasn't been displayed.
-        #
-        # We also need wait until all previously grabbed
-        # data has been looped through the display.
-        #
-        # Last, if our internal store of the data
-        # is empty, try and grab data
-        if not (self.overhead.processing and self.overhead.new_data) and (
+        if not (self.departures.processing and self.departures.new_data) and (
             self._data_all_looped or len(self._data) <= 1
         ):
-            self.overhead.grab_data()
+            self.departures.grab_data()
 
     def run(self):
         try:
-            # Start loop
-            print("Press CTRL-C to stop")
+            print("Train Tracker running - Press CTRL-C to stop")
             self.play()
-
         except KeyboardInterrupt:
             print("Exiting\n")
             sys.exit(0)

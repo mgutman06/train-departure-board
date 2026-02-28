@@ -1,0 +1,16 @@
+[Unit]
+Description=Train Departure Display
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/pi/TrainTracker/env/bin/python /home/pi/TrainTracker/train-tracker.py
+WorkingDirectory=/home/pi/TrainTracker
+StandardOutput=append:/home/pi/train.log
+StandardError=append:/home/pi/train.log
+Restart=on-failure
+User=pi
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

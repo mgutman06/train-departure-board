@@ -1,211 +1,208 @@
-# RBG Matrix Flight Tracker
+# RGB Matrix Train Departure Display
 
-[Blog article about this project](https://blog.colinwaddell.com/flight-tracker/)
+A Raspberry Pi-powered LED matrix display that shows live UK train departure information, styled like the dot matrix displays found at railway stations across the United Kingdom.
 
-[![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
+Uses the [Realtime Trains API](https://api.rtt.io/) for live departure data displayed on a 64x32 RGB LED matrix panel.
 
-# Setup
+Based on the original [FlightTracker](https://github.com/ColinWaddell/FlightTracker) project by Colin Waddell.
 
-## Installation
+## What it shows
 
-The previous instructions were written against Debian Buster and can be found [at this commit](https://github.com/ColinWaddell/FlightTracker/blob/44aa282bdc54a897ab72cbd0dc49017f6a11c11a/README.md). People were starting to find the instructions didn't line up with the latest version of Debian Bookworm. These new instructions are less battle-tested than the previous version so if you run into any problems please raise it as an issue.
+**When trains are departing:**
+- Destination station name (top, amber)
+- Departure time, platform number, and status (middle)
+- Scrolling calling points for each service (bottom)
+- Cycles through upcoming departures automatically
 
-### Installation Guide
+**When no departures:**
+- Station name and clock
+- Animated train
 
-These instructions will assume that running the Flight Tracker on your Raspberry Pi is the only thing you're going to be doing with the device. The other assumptions are going to be:
+## Hardware Required
 
-- You've got your Raspberry Pi set up with Raspbian based on Debian Bookworm 
-- The username of the device is `pi`
-- If you're not using a screen/keyboard attached to the Pi then you've figured out how to remote edit over SSH
+- Raspberry Pi (Pi Zero 2 W, Pi 3, Pi 4, or Pi 5)
+- [Adafruit RGB Matrix Bonnet](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview)
+- 64x32 RGB LED Matrix Panel
+- 5V power supply (for the LED matrix)
 
-### Installation Locations
+## Setup
 
-For future reference, in this installation process we're going to use the following locations:
+### 1. System preparation
 
-| Location                                | Purpose                                                             |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `/home/pi/rpi-rgb-led-matrix`           | RGB Matrix Driver                                                   |
-| `/home/pi/FlightTracker`           | The Flight Tracking software (this repo)                            |
-| `/home/pi/FlightTracker/env`       | The virtual environment we'll install the necessary Python packages  |
-| `/home/pi/FlightTracker/config.py` | Config file for this flight tracking software                       |
-
-### First steps
-
-Before installing anything let's ensure our system is up-to-date:
-
-```
+```bash
 sudo apt-get update
 sudo apt-get dist-upgrade
 ```
 
-This will take a while on a fresh device as it picks up all its updates.
-
-### Install the RGB Screen
+### 2. Install the RGB Screen
 
 1. Assemble the RGB matrix, Pi, and Bonnet as described in [this Adafruit guide](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview).
-2. It is recommended that the [solder bridge is added to the HAT](https://learn.adafruit.com/assets/57727) in order to use the Pi's soundcard to drive the device's PWM.
-3. Please [read the official installation instructions](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/driving-matrices) for further details before proceeding **but don't run any commands or install anything yet**.
-4. Use the following commands to install the `rgb-matrix` library. Please note the paths used in these instructions are used later in this guide and must be adhered to for everything to make sense.
+2. It is recommended that the [solder bridge is added to the HAT](https://learn.adafruit.com/assets/57727) for PWM via the soundcard.
+3. Install the `rgb-matrix` library:
 
-```
+```bash
 cd /home/pi
 curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/main/rgb-matrix.sh > /tmp/rgb-matrix.sh
 sudo bash /tmp/rgb-matrix.sh
 ```
 
-5. If the installation has worked successfully then there should be some demo applications available to run:
+4. Test the display:
 
-```
+```bash
 cd /home/pi/rpi-rgb-led-matrix/examples-api-use
 sudo ./demo --led-rows=32 --led-cols=64 -D0
 ```
 
-### Install this Flight Tracking software
+### 3. Install this software
 
-1. Clone this repository:
-
-```
+```bash
 cd /home/pi/
-git clone https://github.com/ColinWaddell/FlightTracker
-```
-
-2. Head into this repository and create a virtual environment, activate it and install all the dependencies
-
-```
-cd /home/pi/FlightTracker
+git clone https://github.com/ColinWaddell/FlightTracker TrainTracker
+cd /home/pi/TrainTracker
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Head into the rgb-matrix library and install the Python library into our virtual environment. These commands assume you are still using the same environment that we activated in the above steps. If not, rerun the `source` command in the `FlightTracker` directory.
+Install the RGB matrix Python bindings into the virtual environment:
 
-```
+```bash
 cd /home/pi/rpi-rgb-led-matrix/bindings/python
 pip install .
 ```
 
-### Configure the Flight Tracking software for your location
+### 4. Get API credentials
 
-These instructions will show you how to create a config file from the command line with `nano` but in reality you can do this however you want.
+1. Register for a free account at [https://api.rtt.io/](https://api.rtt.io/)
+2. Note your API username and password
 
-```
-cd /home/pi/FlightTracker 
+### 5. Configure
+
+```bash
+cd /home/pi/TrainTracker
 nano config.py
 ```
 
-Here is an example config you can copy into that file:
+Example configuration:
 
-```
-ZONE_HOME = {
-    "tl_y": 56.06403, # Top-Left Latitude (deg)
-    "tl_x": -4.51589, # Top-Left Longitude (deg)
-    "br_y": 55.89088, # Bottom-Right Latitude (deg)
-    "br_x": -4.19694 # Bottom-Right Longitude (deg)
-}
-LOCATION_HOME = [
-    55.9074356, # Latitude (deg)
-    -4.3331678, # Longitude (deg)
-    0.01781 # Altitude (km)
-]
-WEATHER_LOCATION = "Glasgow"
-OPENWEATHER_API_KEY = "" # Get an API key from https://openweathermap.org/price
-TEMPERATURE_UNITS = "metric"
-MIN_ALTITUDE = 100
+```python
+# Station to display departures for (CRS code)
+STATION_CODE = "PAD"
+
+# Realtime Trains API credentials
+RTT_API_USERNAME = "your_rtt_username"
+RTT_API_PASSWORD = "your_rtt_password"
+
+# Maximum number of departures to display
+MAX_DEPARTURES = 10
+
+# How many services to fetch calling points for
+MAX_CALLING_POINT_LOOKUPS = 6
+
+# Display settings
 BRIGHTNESS = 50
 GPIO_SLOWDOWN = 2
-JOURNEY_CODE_SELECTED = "GLA"
-JOURNEY_BLANK_FILLER = " ? "
 HAT_PWM_ENABLED = True
+
+# Data refresh interval in seconds
+REFRESH_INTERVAL = 60
 ```
 
-To save and exit nano hit `Ctrl-X` followed by `Y`.
+### Configuration details
 
-In reality you'll want to customise `config.py` for your own purposes.
+| Variable                   | Description |
+|----------------------------|-------------|
+| `STATION_CODE`             | The CRS code of the station to show departures for. Find your station code at [National Rail](https://www.nationalrail.co.uk/). |
+| `RTT_API_USERNAME`         | Your Realtime Trains API username. Register at [api.rtt.io](https://api.rtt.io/). |
+| `RTT_API_PASSWORD`         | Your Realtime Trains API password. |
+| `MAX_DEPARTURES`           | Maximum number of departures to fetch and cycle through. |
+| `MAX_CALLING_POINT_LOOKUPS`| How many services to fetch detailed calling points for (each is an API call). |
+| `BRIGHTNESS`               | Display brightness, range 0-100. |
+| `GPIO_SLOWDOWN`            | Range 0-4. Higher values reduce flickering on faster Pi models. |
+| `HAT_PWM_ENABLED`          | Set `True` if you've added the solder bridge for soundcard PWM. |
+| `REFRESH_INTERVAL`         | How often (seconds) to fetch fresh departure data. |
 
-### Configuration file details 
+### Common station codes
 
-| Variable                 | Description |
-|--------------------------|-------------|
-| `ZONE_HOME`              | Defines the area within which flights should be tracked. |
-| `LOCATION_HOME`          | Latitude/longitude of your home. |
-| `WEATHER_LOCATION`       | City used to display the temperature. Format: `"City"` or `"City,Province/State,Country"` (e.g., `"Paris"` or `"Paris,Ile-de-France,FR"`). |
-| `OPENWEATHER_API_KEY`    | If provided, enables OpenWeather API. [Get a free key here](https://openweathermap.org/price). *(Optional)* |
-| `TEMPERATURE_UNITS`      | One of `"metric"` or `"imperial"`. Defaults to `"metric"`. |
-| `MIN_ALTITUDE`           | Removes planes below this altitude (in feet). Useful for filtering out planes on the tarmac. |
-| `BRIGHTNESS`             | Range 0–100. Adjusts brightness of the display. |
-| `GPIO_SLOWDOWN`          | Range 0–4. Higher values help reduce flickering on faster hardware (e.g., `2` for Pi Zero 2 W). |
-| `JOURNEY_CODE_SELECTED`  | Three-letter airport code of a local airport to display in **bold**. *(Optional)* |
-| `JOURNEY_BLANK_FILLER`   | Three-letter text used in place of an unknown airport. Defaults to `" ? "`. |
-| `HAT_PWM_ENABLED`        | Enables PWM via Pi’s soundcard. Requires [solder bridge modification](https://learn.adafruit.com/assets/57727). Defaults to `True`. |
+| Station | Code |
+|---------|------|
+| London Paddington | `PAD` |
+| London King's Cross | `KGX` |
+| London Euston | `EUS` |
+| London Waterloo | `WAT` |
+| London Victoria | `VIC` |
+| London Liverpool Street | `LST` |
+| Birmingham New Street | `BHM` |
+| Manchester Piccadilly | `MAN` |
+| Leeds | `LDS` |
+| Edinburgh Waverley | `EDB` |
+| Glasgow Central | `GLC` |
+| Bristol Temple Meads | `BRI` |
+| Cardiff Central | `CDF` |
+| York | `YRK` |
 
+### 6. Configure permissions
 
-### Configuring permissions to avoid running as root
+To avoid running as root:
 
-Previous versions of the instructions always pointed out to run everything as root for performance reasons but for security I think this is best avoided. Plus the latest version of the GPIO driver and rgb-matrix have strong opinions about who is in charge when running as root.
-
-To avoid running as root and to grant Python permission to set real-time scheduling priorities, run the command:
-
+```bash
+sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.11
 ```
-sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.11 
+
+### 7. Test
+
+```bash
+cd /home/pi/TrainTracker
+env/bin/python3 train-tracker.py
 ```
 
-### Running the software manually
+Press `Ctrl-C` to quit.
 
-The software can now be tested by running it from the command line
+### 8. Run on startup
 
-```
-cd /home/pi/FlightTracker 
-env/bin/python3 flight-tracker.py
-```
-
-To quit tap `Ctrl-C`.
-
-### Running the software on start-up
-
-This repo contains an example `.service` file to allow this software to be easily run on boot. Provided that the same paths have been used in your own installation as these instructions then you shouldn't need to edit this file.
-
-```
-sudo cp /home/pi/FlightTracker/assets/FlightTracker.service /etc/systemd/system/FlightTracker.service
+```bash
+sudo cp /home/pi/TrainTracker/assets/TrainTracker.service /etc/systemd/system/TrainTracker.service
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
-sudo systemctl enable FlightTracker.service
-sudo systemctl start FlightTracker.service
+sudo systemctl enable TrainTracker.service
+sudo systemctl start TrainTracker.service
 ```
 
-Any problems, check the status and logs:
+Check status:
 
-```
-sudo systemctl status FlightTracker.service
-journalctl -u FlightTracker.service -f
+```bash
+sudo systemctl status TrainTracker.service
+journalctl -u TrainTracker.service -f
 ```
 
 ## Optional
 
 ### Loading LED
-An LED can be wired to a GPIO on the Raspberry Pi which can then blink when data is being loaded.
 
-To enable this add the following to your `config.py`. Adjust `LOADING_LED_GPIO_PIN` to suit your setup.
+An LED can be wired to a GPIO pin to blink when data is being fetched. Add to `config.py`:
 
-```
+```python
 LOADING_LED_ENABLED = True
 LOADING_LED_GPIO_PIN = 25
 ```
 
-### Rainfall chart
-If weather data is being pulled from my server (as opposed to using `OPENWEATHER_API_KEY`) then you can
-display a chart of rainfall by adding the following to your `config.py`:
+## Display Layout
 
 ```
-RAINFALL_ENABLED = True
++----------------------------------------------------------------+
+|  Destination Station Name              (large font, amber)     |
+|----------------------------------------------------------------|
+|  12:05  P3  On time                          1/5  (info row)   |
+|                                                                |
+|  Calling at: Reading, Swindon, Bristol...  (scrolling, amber)  |
++----------------------------------------------------------------+
 ```
 
-[![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
+- **Top**: Destination station name in large amber text
+- **Middle**: Departure time (yellow), platform (white), status (green/amber/red), service index
+- **Bottom**: Scrolling calling points in amber, cycling to next departure when complete
 
-# License Update:
-As of April 2025, Flight Tracker is released under the GNU General Public License v3.0
+## License
 
-You’re welcome to use, modify, and share the code—just keep it under the same license and include
-proper attribution (retain my copyright and license notice). See LICENSE for details.
-
-[I had to add this license as folks have started selling these online as their own with zero attribution](https://colinwaddell.com/articles/flight-radar-ripoff). Open-source projects like this are our CVs: they show peers and potential employers what we can do. Passing off someone else’s work as your own robs us of our chance to promote ourselves.
+Based on [FlightTracker](https://github.com/ColinWaddell/FlightTracker) by Colin Waddell.
+Released under the GNU General Public License v3.0. See LICENSE for details.

@@ -8,7 +8,7 @@ from rgbmatrix import graphics
 # Setup
 CLOCK_FONT = fonts.regular
 CLOCK_POSITION = (1, 8)
-CLOCK_COLOUR = colours.BLUE_DARK
+CLOCK_COLOUR = colours.CLOCK_COLOUR
 
 
 class ClockScene(object):
@@ -26,12 +26,12 @@ class ClockScene(object):
             # If there's no data to display
             # then draw a clock
             now = datetime.now()
-            current_time = now.strftime("%I:%M %p")
+            current_time = now.strftime("%H:%M")
 
             # Only draw if time needs updated
             if self._last_time != current_time:
                 # Undraw last time if different from current
-                if not self._last_time is None:
+                if self._last_time is not None:
                     _ = graphics.DrawText(
                         self.canvas,
                         CLOCK_FONT,

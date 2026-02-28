@@ -4,7 +4,7 @@ from setup import colours
 # Setup
 BLINKER_POSITION = (63, 0)
 BLINKER_STEPS = 10
-BLINKER_COLOUR = colours.WHITE
+BLINKER_COLOUR = colours.AMBER
 
 
 class LoadingPulseScene(object):
@@ -14,7 +14,7 @@ class LoadingPulseScene(object):
     @Animator.KeyFrame.add(2)
     def loading_pulse(self, count):
         reset_count = True
-        if self.overhead.processing:
+        if self.departures.processing:
             # Calculate the brightness scaler and
             # ensure it's within a sensible range
             brightness = (1 - (count / BLINKER_STEPS)) / 2
@@ -31,7 +31,7 @@ class LoadingPulseScene(object):
             # Only count 0 -> (BLINKER_STEPS - 1)
             reset_count = count == (BLINKER_STEPS - 1)
         else:
-            # Not processing, blank the square
+            # Not processing, blank the pixel
             self.canvas.SetPixel(BLINKER_POSITION[0], BLINKER_POSITION[1], 0, 0, 0)
 
         return reset_count

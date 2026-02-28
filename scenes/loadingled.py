@@ -38,7 +38,7 @@ class LoadingLEDScene(object):
         if not self.gpio_setup_complete:
             self.gpio_setup()
 
-        if self.overhead.processing:
+        if self.departures.processing:
             if self.gpio_setup_complete:
                 GPIO.output(
                     LOADING_LED_GPIO_PIN,
