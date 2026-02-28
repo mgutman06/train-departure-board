@@ -1,7 +1,7 @@
 import sys
 from setup import frames
 from utilities.animator import Animator
-from utilities.trains import Departures
+from utilities.trains import Departures, load_config
 from scenes.destination import DestinationScene
 from scenes.departureinfo import DepartureInfoScene
 from scenes.callingpoints import CallingPointsScene
@@ -121,6 +121,12 @@ class Display(
 
     @Animator.KeyFrame.add(frames.PER_SECOND * REFRESH_INTERVAL)
     def grab_new_data(self, count):
+        # Reload refresh interval from config so web UI changes apply live
+        cfg = load_config()
+        new_divisor = int(frames.PER_SECOND * cfg.get("REFRESH_INTERVAL", REFRESH_INTERVAL))
+        if self.grab_new_data.properties["divisor"] != new_divisor:
+            self.grab_new_data.properties["divisor"] = new_divisor
+
         if not (self.departures.processing and self.departures.new_data) and (
             self._data_all_looped or len(self._data) <= 1
         ):

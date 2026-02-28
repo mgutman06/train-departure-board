@@ -1,28 +1,41 @@
+import importlib.util
+import os
 import requests
 from threading import Thread, Lock
 from time import sleep
 from requests.exceptions import ConnectionError
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-try:
-    from config import (
-        STATION_CODE,
-        DARWIN_API_TOKEN,
-        HUXLEY_URL,
-        MAX_DEPARTURES,
-    )
-except (ModuleNotFoundError, NameError, ImportError):
-    STATION_CODE = "PAD"
-    DARWIN_API_TOKEN = ""
-    HUXLEY_URL = "https://huxley2.azurewebsites.net"
-    MAX_DEPARTURES = 10
+_CONFIG_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.py"
+)
+
+_DEFAULTS = {
+    "STATION_CODE": "PAD",
+    "DARWIN_API_TOKEN": "",
+    "HUXLEY_URL": "https://huxley2.azurewebsites.net",
+    "MAX_DEPARTURES": 10,
+    "REFRESH_INTERVAL": 60,
+}
+
+
+def load_config():
+    """Load config fresh from disk so changes apply without a restart."""
+    try:
+        spec = importlib.util.spec_from_file_location("config", _CONFIG_FILE)
+        config = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config)
+        return {key: getattr(config, key, default) for key, default in _DEFAULTS.items()}
+    except Exception:
+        return dict(_DEFAULTS)
 
 
 class Departures:
     def __init__(self):
         self._lock = Lock()
         self._data = []
-        self._station_name = STATION_CODE
+        cfg = load_config()
+        self._station_name = cfg["STATION_CODE"]
         self._new_data = False
         self._processing = False
 
@@ -34,19 +47,20 @@ class Departures:
             self._new_data = False
             self._processing = True
 
+        cfg = load_config()
         data = []
 
         try:
             url = (
-                f"{HUXLEY_URL.rstrip('/')}/departures/{STATION_CODE}"
-                f"/{MAX_DEPARTURES}"
-                f"?accessToken={DARWIN_API_TOKEN}&expand=true"
+                f"{cfg['HUXLEY_URL'].rstrip('/')}/departures/{cfg['STATION_CODE']}"
+                f"/{cfg['MAX_DEPARTURES']}"
+                f"?accessToken={cfg['DARWIN_API_TOKEN']}&expand=true"
             )
             response = requests.get(url, timeout=15)
             response.raise_for_status()
             result = response.json()
 
-            station_name = result.get("locationName", STATION_CODE)
+            station_name = result.get("locationName", cfg["STATION_CODE"])
             services = result.get("trainServices") or []
 
             for service in services:
