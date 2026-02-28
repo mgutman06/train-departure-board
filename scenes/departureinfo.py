@@ -6,11 +6,9 @@ from rgbmatrix import graphics
 # Layout
 INFO_Y = 21
 INFO_FONT = fonts.small
-INDEX_FONT = fonts.extrasmall
-INDEX_Y = 21
+STATUS_FONT = fonts.extrasmall
 
 BAR_Y = 14
-BAR_PADDING = 2
 
 
 class DepartureInfoScene(object):
@@ -52,7 +50,7 @@ class DepartureInfoScene(object):
             )
             x_pos += plt_length + 2
 
-        # Draw mins until arrival or status
+        # Determine status display text and colour
         if cancelled:
             status_colour = colours.STATUS_CANCELLED
             display_text = status
@@ -66,22 +64,12 @@ class DepartureInfoScene(object):
             status_colour = colours.STATUS_DELAYED
             display_text = status
 
-        # Calculate status position to fit on the right
-        # If there are multiple services, show index too
-        if len(self._data) > 1:
-            index_text = f"{self._data_index + 1}/{len(self._data)}"
-            # Draw index at far right
-            index_x = screen.WIDTH - (len(index_text) * 4) - 1
-            graphics.DrawText(
-                self.canvas, INDEX_FONT, index_x, INFO_Y, colours.INDEX_COLOUR, index_text
-            )
-            # Draw status between platform and index
-            status_x = max(x_pos, index_x - (len(display_text) * 5) - 2)
-            graphics.DrawText(
-                self.canvas, INDEX_FONT, status_x, INFO_Y, status_colour, display_text
-            )
-        else:
-            # Just draw status after platform
-            graphics.DrawText(
-                self.canvas, INDEX_FONT, x_pos, INFO_Y, status_colour, display_text
-            )
+        # Draw status/ETA right-aligned to avoid any overlap
+        status_width = len(display_text) * 4  # extrasmall font ~4px per char
+        status_x = screen.WIDTH - status_width - 1
+        # Ensure status doesn't collide with time/platform
+        status_x = max(status_x, x_pos)
+
+        graphics.DrawText(
+            self.canvas, STATUS_FONT, status_x, INFO_Y, status_colour, display_text
+        )
