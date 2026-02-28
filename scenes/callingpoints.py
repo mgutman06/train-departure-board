@@ -55,33 +55,24 @@ class CallingPointsScene(object):
 
         # Draw stop dots
         for i, x in enumerate(positions):
+            is_origin = (i == 0)
             is_dest = (i == len(positions) - 1)
-            c = DEST_STOP_COLOUR if is_dest else PASSED_STOP_COLOUR
+
+            if is_origin:
+                c = TRAIN_MARKER_COLOUR  # Green dot where the train is
+            elif is_dest:
+                c = DEST_STOP_COLOUR
+            else:
+                c = PASSED_STOP_COLOUR
 
             # Draw dot (3px wide)
             self.canvas.SetPixel(x, TRACK_Y, c.red, c.green, c.blue)
             self.canvas.SetPixel(x - 1, TRACK_Y, c.red, c.green, c.blue)
             self.canvas.SetPixel(x + 1, TRACK_Y, c.red, c.green, c.blue)
-            if is_dest:
-                # Slightly larger for destination
+            if is_dest or is_origin:
+                # Slightly larger for origin and destination
                 self.canvas.SetPixel(x, TRACK_Y - 1, c.red, c.green, c.blue)
                 self.canvas.SetPixel(x, TRACK_Y + 1, c.red, c.green, c.blue)
-
-        # Animate train marker between last passed stop and destination
-        if len(positions) >= 2:
-            from_x = positions[-2]
-            to_x = positions[-1]
-            progress = min(self._route_frame / DISPLAY_FRAMES, 0.9)
-            train_x = int(from_x + (to_x - from_x) * progress)
-        else:
-            train_x = TRACK_X_START
-
-        # Draw train marker (bright block above track)
-        c = TRAIN_MARKER_COLOUR
-        self.canvas.SetPixel(train_x - 1, TRACK_Y - 2, c.red, c.green, c.blue)
-        self.canvas.SetPixel(train_x, TRACK_Y - 2, c.red, c.green, c.blue)
-        self.canvas.SetPixel(train_x + 1, TRACK_Y - 2, c.red, c.green, c.blue)
-        self.canvas.SetPixel(train_x, TRACK_Y - 1, c.red, c.green, c.blue)
 
         self._route_frame += 1
 
