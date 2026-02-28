@@ -94,20 +94,28 @@ class Departures:
                 # Calculate minutes until arrival
                 arrival_time_str = eta if eta not in ("On time", "Delayed", "Cancelled", "") else scheduled
                 mins_until = ""
-                if arrival_time_str and not cancelled:
+                mins_diff = None
+                if arrival_time_str:
                     try:
                         arr_time = datetime.strptime(arrival_time_str, "%H:%M").replace(
                             year=now.year, month=now.month, day=now.day
                         )
                         diff = int((arr_time - now).total_seconds() / 60)
-                        if diff < 0:
-                            diff += 24 * 60  # next day
-                        if diff == 0:
-                            mins_until = "Due"
-                        else:
-                            mins_until = f"{diff}min"
+                        # Handle midnight crossing: very negative means tomorrow
+                        if diff < -720:
+                            diff += 24 * 60
+                        mins_diff = diff
+                        if not cancelled:
+                            if diff <= 0:
+                                mins_until = "Due"
+                            else:
+                                mins_until = f"{diff}min"
                     except ValueError:
                         pass
+
+                # Only show trains arriving within 2 hours or already arrived
+                if mins_diff is not None and mins_diff > 120:
+                    continue
 
                 # Get platform
                 platform = service.get("platform", "")
