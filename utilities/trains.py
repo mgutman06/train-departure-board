@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import requests
+from datetime import datetime
 from threading import Thread, Lock
 from time import sleep
 from requests.exceptions import ConnectionError
@@ -52,7 +53,7 @@ class Departures:
 
         try:
             url = (
-                f"{cfg['HUXLEY_URL'].rstrip('/')}/departures/{cfg['STATION_CODE']}"
+                f"{cfg['HUXLEY_URL'].rstrip('/')}/arrivals/{cfg['STATION_CODE']}"
                 f"/{cfg['MAX_DEPARTURES']}"
                 f"?accessToken={cfg['DARWIN_API_TOKEN']}&expand=true"
             )
@@ -63,30 +64,50 @@ class Departures:
             station_name = result.get("locationName", cfg["STATION_CODE"])
             services = result.get("trainServices") or []
 
+            now = datetime.now()
+
             for service in services:
-                # Get destination
-                destinations = service.get("destination") or []
-                if not destinations:
+                # Get origin (where the train is coming from)
+                origins = service.get("origin") or []
+                if not origins:
                     continue
-                destination = destinations[0].get("locationName", "Unknown")
+                origin = origins[0].get("locationName", "Unknown")
 
-                # Get times — std/etd are already formatted as "HH:MM"
-                scheduled = service.get("std", "")
-                etd = service.get("etd", "")
+                # Get times — sta/eta are already formatted as "HH:MM"
+                scheduled = service.get("sta", "")
+                eta = service.get("eta", "")
 
-                # Determine status from etd
-                # etd can be: "On time", "Delayed", "Cancelled", or a time like "09:30"
-                cancelled = service.get("isCancelled", False) or etd == "Cancelled"
+                # Determine status from eta
+                # eta can be: "On time", "Delayed", "Cancelled", or a time like "09:30"
+                cancelled = service.get("isCancelled", False) or eta == "Cancelled"
 
                 if cancelled:
                     status = "Cancelled"
-                elif etd == "On time":
+                elif eta == "On time":
                     status = "On time"
-                elif etd == "Delayed":
+                elif eta == "Delayed":
                     status = "Delayed"
                 else:
-                    # etd is an actual time like "09:30"
-                    status = f"Exp {etd}"
+                    # eta is an actual time like "09:30"
+                    status = f"Exp {eta}"
+
+                # Calculate minutes until arrival
+                arrival_time_str = eta if eta not in ("On time", "Delayed", "Cancelled", "") else scheduled
+                mins_until = ""
+                if arrival_time_str and not cancelled:
+                    try:
+                        arr_time = datetime.strptime(arrival_time_str, "%H:%M").replace(
+                            year=now.year, month=now.month, day=now.day
+                        )
+                        diff = int((arr_time - now).total_seconds() / 60)
+                        if diff < 0:
+                            diff += 24 * 60  # next day
+                        if diff == 0:
+                            mins_until = "Due"
+                        else:
+                            mins_until = f"{diff}min"
+                    except ValueError:
+                        pass
 
                 # Get platform
                 platform = service.get("platform", "")
@@ -94,12 +115,12 @@ class Departures:
                 # Get operator
                 operator = service.get("operator", "")
 
-                # Get calling points from expanded response
+                # Get previous calling points from expanded response
                 calling_points = []
-                subsequent = service.get("subsequentCallingPoints")
-                if subsequent:
-                    # subsequentCallingPoints is a list of lists
-                    for point_list in subsequent:
+                previous = service.get("previousCallingPoints")
+                if previous:
+                    # previousCallingPoints is a list of lists
+                    for point_list in previous:
                         calling_point_items = point_list.get("callingPoint") or []
                         for point in calling_point_items:
                             name = point.get("locationName", "")
@@ -107,14 +128,15 @@ class Departures:
                                 calling_points.append(name)
 
                 data.append({
-                    "destination": destination,
+                    "origin": origin,
                     "scheduled": scheduled,
-                    "expected": etd if etd not in ("On time", "Delayed", "Cancelled") else "",
+                    "expected": eta if eta not in ("On time", "Delayed", "Cancelled") else "",
                     "platform": platform,
                     "status": status,
                     "cancelled": cancelled,
                     "operator": operator,
                     "calling_points": calling_points,
+                    "mins_until": mins_until,
                 })
 
             with self._lock:
@@ -163,6 +185,6 @@ if __name__ == "__main__":
         sleep(1)
 
     for dep in d.data:
-        print(f"{dep['scheduled']}  {dep['destination']:30s}  {dep['status']:12s}  Plt {dep['platform']}")
+        print(f"{dep['scheduled']}  From {dep['origin']:30s}  {dep['status']:12s}  Plt {dep['platform']}  {dep['mins_until']}")
         if dep["calling_points"]:
-            print(f"  Calling at: {', '.join(dep['calling_points'])}")
+            print(f"  Via: {', '.join(dep['calling_points'])}")

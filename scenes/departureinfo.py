@@ -27,6 +27,7 @@ class DepartureInfoScene(object):
         platform = dep["platform"]
         status = dep["status"]
         cancelled = dep["cancelled"]
+        mins_until = dep.get("mins_until", "")
 
         # Clear the info area
         self.draw_square(0, BAR_Y, screen.WIDTH, INFO_Y + 1, colours.BLACK)
@@ -36,7 +37,7 @@ class DepartureInfoScene(object):
             self.canvas, 0, BAR_Y, screen.WIDTH - 1, BAR_Y, colours.DIVIDER_COLOUR
         )
 
-        # Draw departure time
+        # Draw arrival time
         x_pos = 1
         time_length = graphics.DrawText(
             self.canvas, INFO_FONT, x_pos, INFO_Y, colours.TIME_COLOUR, time_text
@@ -51,13 +52,19 @@ class DepartureInfoScene(object):
             )
             x_pos += plt_length + 2
 
-        # Draw status (right-aligned area)
+        # Draw mins until arrival or status
         if cancelled:
             status_colour = colours.STATUS_CANCELLED
+            display_text = status
+        elif mins_until:
+            status_colour = colours.STATUS_ON_TIME
+            display_text = mins_until
         elif status == "On time":
             status_colour = colours.STATUS_ON_TIME
+            display_text = status
         else:
             status_colour = colours.STATUS_DELAYED
+            display_text = status
 
         # Calculate status position to fit on the right
         # If there are multiple services, show index too
@@ -69,12 +76,12 @@ class DepartureInfoScene(object):
                 self.canvas, INDEX_FONT, index_x, INFO_Y, colours.INDEX_COLOUR, index_text
             )
             # Draw status between platform and index
-            status_x = max(x_pos, index_x - (len(status) * 5) - 2)
+            status_x = max(x_pos, index_x - (len(display_text) * 5) - 2)
             graphics.DrawText(
-                self.canvas, INDEX_FONT, status_x, INFO_Y, status_colour, status
+                self.canvas, INDEX_FONT, status_x, INFO_Y, status_colour, display_text
             )
         else:
             # Just draw status after platform
             graphics.DrawText(
-                self.canvas, INDEX_FONT, x_pos, INFO_Y, status_colour, status
+                self.canvas, INDEX_FONT, x_pos, INFO_Y, status_colour, display_text
             )
