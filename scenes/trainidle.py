@@ -69,9 +69,9 @@ class TrainIdleScene(object):
             self.canvas, CLOCK_FONT, 1, CLOCK_Y, colours.CLOCK_COLOUR, current_time
         )
 
-        # Draw "No departures" text
+        # Draw "No arrivals" text
         graphics.DrawText(
-            self.canvas, fonts.extrasmall, 34, CLOCK_Y, colours.AMBER_DARK, "No deps"
+            self.canvas, fonts.extrasmall, 34, CLOCK_Y, colours.AMBER_DARK, "No arrs"
         )
 
         # Animate train

@@ -18,17 +18,17 @@ class DestinationScene(object):
         if len(self._data) == 0:
             return
 
-        dest = self._data[self._data_index]["destination"]
+        origin = self._data[self._data_index]["origin"]
 
         # Clear the destination area
         self.draw_square(0, 0, screen.WIDTH, DESTINATION_Y + 1, colours.BLACK)
 
-        # Draw destination station name
+        # Draw origin station name (where train is coming from)
         _ = graphics.DrawText(
             self.canvas,
             DESTINATION_FONT,
             1,
             DESTINATION_Y,
             DESTINATION_COLOUR,
-            dest if dest else "Unknown",
+            origin if origin else "Unknown",
         )

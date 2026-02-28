@@ -134,7 +134,7 @@ TEMPLATE = """
 <body>
     <div class="container">
         <h1>Trainline</h1>
-        <p class="subtitle">Configure your departure display</p>
+        <p class="subtitle">Configure your arrival display</p>
 
         {% if saved %}
         <div class="saved">Settings saved. Changes will apply automatically on the next data refresh. Display hardware settings (brightness, GPIO, HAT PWM) still require a restart.</div>
@@ -196,7 +196,7 @@ TEMPLATE = """
                 <h2>Data</h2>
                 <div class="row">
                     <div class="field">
-                        <label for="max_departures">Max Departures</label>
+                        <label for="max_departures">Max Arrivals</label>
                         <input type="number" id="max_departures" name="max_departures"
                                value="{{ c.MAX_DEPARTURES }}" min="1" max="20">
                     </div>

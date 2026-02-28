@@ -28,7 +28,7 @@ class CallingPointsScene(object):
 
         # Build scrolling text
         if calling:
-            scroll_text = "Calling at: " + ", ".join(calling)
+            scroll_text = "From: " + ", ".join(calling)
         elif operator:
             scroll_text = operator
         else:

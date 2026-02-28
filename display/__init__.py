@@ -13,9 +13,9 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 
 def services_match(services_a, services_b):
-    """Check if two service lists contain the same departures."""
+    """Check if two service lists contain the same arrivals."""
     get_ids = lambda services: [
-        f"{s['scheduled']}-{s['destination']}" for s in services
+        f"{s['scheduled']}-{s['origin']}" for s in services
     ]
     return set(get_ids(services_a)) == set(get_ids(services_b))
 
@@ -134,7 +134,7 @@ class Display(
 
     def run(self):
         try:
-            print("Train Tracker running - Press CTRL-C to stop")
+            print("Train Arrival Tracker running - Press CTRL-C to stop")
             self.play()
         except KeyboardInterrupt:
             print("Exiting\n")
