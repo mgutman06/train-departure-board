@@ -163,6 +163,7 @@ SSH back into the Pi and run:
 
 ```bash
 sudo apt-get update && sudo apt-get -y dist-upgrade
+sudo apt-get install -y git
 ```
 
 This may take several minutes. Then install the RGB matrix library:
@@ -364,7 +365,7 @@ sudo reboot
 
 This means the display is working but no departure data is available. This
 happens when:
-- API credentials are wrong — check your username and password in the web UI.
+- API credentials are wrong — check your Darwin API token in the web UI.
 - The station code is invalid — double-check it on the National Rail website.
 - There are genuinely no departures (e.g. late at night or during a strike).
 
