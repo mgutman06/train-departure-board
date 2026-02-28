@@ -1,5 +1,5 @@
-# Train Tracker Configuration
-# ===========================
+# Trainline Configuration
+# =======================
 
 # Station to display departures for (CRS code)
 # Common examples: PAD (Paddington), KGX (King's Cross), EUS (Euston),

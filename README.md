@@ -1,4 +1,4 @@
-# RGB Matrix Train Departure Display
+# Trainline - RGB Matrix Train Departure Display
 
 A Raspberry Pi-powered LED matrix display that shows live UK train departure information, styled like the dot matrix displays found at railway stations across the United Kingdom.
 
@@ -57,8 +57,8 @@ sudo ./demo --led-rows=32 --led-cols=64 -D0
 
 ```bash
 cd /home/pi/
-git clone https://github.com/ColinWaddell/FlightTracker TrainTracker
-cd /home/pi/TrainTracker
+git clone https://github.com/mgutman06/FlightTracker trainline
+cd /home/pi/trainline
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
@@ -79,7 +79,7 @@ pip install .
 ### 5. Configure
 
 ```bash
-cd /home/pi/TrainTracker
+cd /home/pi/trainline
 nano config.py
 ```
 
@@ -152,8 +152,8 @@ sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.11
 ### 7. Test
 
 ```bash
-cd /home/pi/TrainTracker
-env/bin/python3 train-tracker.py
+cd /home/pi/trainline
+env/bin/python3 trainline.py
 ```
 
 Press `Ctrl-C` to quit.
@@ -161,18 +161,18 @@ Press `Ctrl-C` to quit.
 ### 8. Run on startup
 
 ```bash
-sudo cp /home/pi/TrainTracker/assets/TrainTracker.service /etc/systemd/system/TrainTracker.service
+sudo cp /home/pi/trainline/assets/trainline.service /etc/systemd/system/trainline.service
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
-sudo systemctl enable TrainTracker.service
-sudo systemctl start TrainTracker.service
+sudo systemctl enable trainline.service
+sudo systemctl start trainline.service
 ```
 
 Check status:
 
 ```bash
-sudo systemctl status TrainTracker.service
-journalctl -u TrainTracker.service -f
+sudo systemctl status trainline.service
+journalctl -u trainline.service -f
 ```
 
 ## Web Configuration UI
@@ -182,7 +182,7 @@ A built-in web interface lets you update settings from any device on your networ
 ### Running the web UI
 
 ```bash
-cd /home/pi/TrainTracker
+cd /home/pi/trainline
 env/bin/python3 web_config.py
 ```
 
@@ -196,7 +196,7 @@ Then open `http://<your-pi-ip>:5000` in a browser. From there you can change:
 After saving, restart the tracker for changes to take effect:
 
 ```bash
-sudo systemctl restart TrainTracker.service
+sudo systemctl restart trainline.service
 ```
 
 ## Optional

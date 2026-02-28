@@ -1,4 +1,4 @@
-# Train Tracker - Complete Installation Guide
+# Trainline - Complete Installation Guide
 
 A step-by-step guide to building a live UK train departure display using a
 Raspberry Pi and an RGB LED matrix panel. This guide assumes you are starting
@@ -13,7 +13,7 @@ from a brand-new, unopened Raspberry Pi and have never used one before.
 3. [First Boot and SSH Access](#3-first-boot-and-ssh-access)
 4. [Assemble the Hardware](#4-assemble-the-hardware)
 5. [Install the RGB Matrix Driver](#5-install-the-rgb-matrix-driver)
-6. [Install Train Tracker](#6-install-train-tracker)
+6. [Install Trainline](#6-install-trainline)
 7. [Get Your API Credentials](#7-get-your-api-credentials)
 8. [Configure via Web UI](#8-configure-via-the-web-ui)
 9. [Start the Display](#9-start-the-display)
@@ -64,7 +64,7 @@ Download and install the official imaging tool:
 #### OS Customisation Settings (important!)
 
 On the **General** tab:
-- **Set hostname**: `traintracker` (or whatever you like)
+- **Set hostname**: `trainline` (or whatever you like)
 - **Set username and password**: Choose a username (default: `pi`) and a strong password. **Write this down.**
 - **Configure wireless LAN**: Enter your Wi-Fi network name (SSID) and password. Select your country.
 - **Set locale settings**: Choose your timezone.
@@ -92,14 +92,14 @@ You need the Pi's IP address to connect to it. Try any of these methods:
 
 **Option A — Use the hostname (simplest):**
 ```
-ping traintracker.local
+ping trainline.local
 ```
-If this responds, you can use `traintracker.local` instead of an IP address
+If this responds, you can use `trainline.local` instead of an IP address
 everywhere in this guide.
 
 **Option B — Check your router:**
 Log into your router's admin page (often 192.168.1.1 or 192.168.0.1) and look
-for a device named `traintracker` in the connected devices list.
+for a device named `trainline` in the connected devices list.
 
 **Option C — Scan the network:**
 - **Windows**: Download [Advanced IP Scanner](https://www.advanced-ip-scanner.com/)
@@ -111,17 +111,17 @@ for a device named `traintracker` in the connected devices list.
 Prompt (Windows 10+) or install [PuTTY](https://www.putty.org/).
 
 ```bash
-ssh pi@traintracker.local
+ssh pi@trainline.local
 ```
 
-Replace `pi` with the username you chose during setup, and `traintracker.local`
+Replace `pi` with the username you chose during setup, and `trainline.local`
 with the IP address if the hostname doesn't resolve.
 
 When prompted, type `yes` to accept the host key, then enter your password.
 
 You should now see a prompt like:
 ```
-pi@traintracker:~ $
+pi@trainline:~ $
 ```
 
 **Every command from this point onwards is typed into this SSH session.**
@@ -194,14 +194,14 @@ the `GPIO_SLOWDOWN` setting.
 
 ---
 
-## 6. Install Train Tracker
+## 6. Install Trainline
 
 ### 6.1 Clone the repository
 
 ```bash
 cd /home/pi
-git clone https://github.com/ColinWaddell/FlightTracker TrainTracker
-cd TrainTracker
+git clone https://github.com/mgutman06/FlightTracker trainline
+cd trainline
 ```
 
 ### 6.2 Run the setup script
@@ -219,8 +219,8 @@ This will:
 - Install the RGB matrix Python bindings
 - Set the necessary Linux capabilities so the display doesn't need root
 - Create two systemd services:
-  - **TrainTracker** — the main departure display (not started yet)
-  - **TrainTrackerWeb** — the settings web page (started immediately)
+  - **trainline** — the main departure display (not started yet)
+  - **trainline-web** — the settings web page (started immediately)
 - Enable both services to launch automatically whenever the Pi boots
 
 When the script finishes it will print the URL for the settings page.
@@ -251,7 +251,7 @@ on the same Wi-Fi network as the Pi.
 On your phone, tablet, or computer, open a browser and go to:
 
 ```
-http://traintracker.local:5000
+http://trainline.local:5000
 ```
 
 or
@@ -260,7 +260,7 @@ or
 http://<your-pi-ip-address>:5000
 ```
 
-You will see the Train Tracker settings page.
+You will see the Trainline settings page.
 
 ### 8.2 Enter your settings
 
@@ -307,7 +307,7 @@ Click **Save Settings**. You will see a green confirmation banner.
 Back in your SSH session, start the main display:
 
 ```bash
-sudo systemctl start TrainTracker.service
+sudo systemctl start trainline.service
 ```
 
 The LED panel should light up within a few seconds showing departures from
@@ -321,20 +321,20 @@ back up on its own.
 
 | What | Command |
 |------|---------|
-| Check display status | `sudo systemctl status TrainTracker` |
-| Check web UI status | `sudo systemctl status TrainTrackerWeb` |
-| Stop the display | `sudo systemctl stop TrainTracker` |
-| Restart after changing settings | `sudo systemctl restart TrainTracker` |
-| View live logs | `tail -f ~/train.log` |
-| View web UI logs | `tail -f ~/train-web.log` |
+| Check display status | `sudo systemctl status trainline` |
+| Check web UI status | `sudo systemctl status trainline-web` |
+| Stop the display | `sudo systemctl stop trainline` |
+| Restart after changing settings | `sudo systemctl restart trainline` |
+| View live logs | `tail -f ~/trainline.log` |
+| View web UI logs | `tail -f ~/trainline-web.log` |
 
 ### Changing settings later
 
-The web UI is always available at `http://traintracker.local:5000`. After
+The web UI is always available at `http://trainline.local:5000`. After
 saving new settings, restart the display to apply them:
 
 ```bash
-sudo systemctl restart TrainTracker.service
+sudo systemctl restart trainline.service
 ```
 
 Or simply reboot the Pi:
@@ -355,11 +355,11 @@ sudo reboot
   **input** port, not the output.
 - **Check the service is running:**
   ```bash
-  sudo systemctl status TrainTracker
+  sudo systemctl status trainline
   ```
 - **Check the logs:**
   ```bash
-  tail -50 ~/train.log
+  tail -50 ~/trainline.log
   ```
 
 ### The display shows an animated train but no departures
@@ -372,7 +372,7 @@ happens when:
 
 Check the log for API errors:
 ```bash
-grep -i error ~/train.log
+grep -i error ~/trainline.log
 ```
 
 ### The display is flickering
@@ -390,11 +390,11 @@ Then restart the service.
 - Try the IP address instead of the hostname: `http://<ip>:5000`
 - Check if the web service is running:
   ```bash
-  sudo systemctl status TrainTrackerWeb
+  sudo systemctl status trainline-web
   ```
 - If it is not running, start it:
   ```bash
-  sudo systemctl start TrainTrackerWeb
+  sudo systemctl start trainline-web
   ```
 
 ### SSH connection refused
@@ -409,7 +409,7 @@ Then restart the service.
 If you prefer the command line over the web UI:
 
 ```bash
-nano /home/pi/TrainTracker/config.py
+nano /home/pi/trainline/config.py
 ```
 
 Save with `Ctrl-O`, `Enter`, then exit with `Ctrl-X`. Restart the service
@@ -418,10 +418,10 @@ afterwards.
 ### I want to update to the latest version
 
 ```bash
-cd /home/pi/TrainTracker
-sudo systemctl stop TrainTracker
+cd /home/pi/trainline
+sudo systemctl stop trainline
 git pull
-sudo systemctl start TrainTracker
+sudo systemctl start trainline
 ```
 
 ### Checking the Pi's IP address from SSH
@@ -433,7 +433,7 @@ hostname -I
 ### Viewing real-time display output
 
 ```bash
-journalctl -u TrainTracker.service -f
+journalctl -u trainline.service -f
 ```
 
 Press `Ctrl-C` to stop following the log.

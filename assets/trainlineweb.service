@@ -1,11 +1,11 @@
 [Unit]
-Description=Train Tracker Web Configuration UI
+Description=Trainline Web Configuration UI
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/home/pi/TrainTracker/env/bin/python /home/pi/TrainTracker/web_config.py
-WorkingDirectory=/home/pi/TrainTracker
+ExecStart=/home/pi/trainline/env/bin/python /home/pi/trainline/web_config.py
+WorkingDirectory=/home/pi/trainline
 StandardOutput=append:/home/pi/train-web.log
 StandardError=append:/home/pi/train-web.log
 Restart=on-failure

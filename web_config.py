@@ -16,8 +16,8 @@ def load_config():
 
 def save_config(data):
     with open(CONFIG_FILE, "w") as f:
-        f.write("# Train Tracker Configuration\n")
-        f.write("# ===========================\n\n")
+        f.write("# Trainline Configuration\n")
+        f.write("# =======================\n\n")
         f.write(f'STATION_CODE = "{data["station_code"].strip().upper()}"\n\n')
         f.write(f'RTT_API_USERNAME = "{data["rtt_username"].strip()}"\n')
         f.write(f'RTT_API_PASSWORD = "{data["rtt_password"].strip()}"\n\n')
@@ -37,7 +37,7 @@ TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Train Tracker Settings</title>
+    <title>Trainline Settings</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -134,7 +134,7 @@ TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <h1>Train Tracker</h1>
+        <h1>Trainline</h1>
         <p class="subtitle">Configure your departure display</p>
 
         {% if saved %}

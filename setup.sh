@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
-# Train Tracker - Automated Setup Script
+# Trainline - Automated Setup Script
 # =============================================================================
-# This script installs and configures the Train Tracker on a Raspberry Pi.
+# This script installs and configures Trainline on a Raspberry Pi.
 # It sets up both the main display service and the web configuration UI
 # to start automatically on boot.
 #
@@ -28,13 +28,13 @@ fi
 
 INSTALL_USER="${SUDO_USER:-pi}"
 INSTALL_HOME=$(eval echo "~$INSTALL_USER")
-PROJECT_DIR="$INSTALL_HOME/TrainTracker"
+PROJECT_DIR="$INSTALL_HOME/trainline"
 
-if [ ! -f "$PROJECT_DIR/train-tracker.py" ]; then
-    error "Could not find train-tracker.py in $PROJECT_DIR\n       Make sure you cloned the repo to $PROJECT_DIR first."
+if [ ! -f "$PROJECT_DIR/trainline.py" ]; then
+    error "Could not find trainline.py in $PROJECT_DIR\n       Make sure you cloned the repo to $PROJECT_DIR first."
 fi
 
-info "Installing Train Tracker for user '$INSTALL_USER'"
+info "Installing Trainline for user '$INSTALL_USER'"
 info "Project directory: $PROJECT_DIR"
 echo ""
 
@@ -82,19 +82,19 @@ info "Python capabilities set."
 # --- Step 5: Install systemd services ---
 cd "$PROJECT_DIR"
 
-# Main tracker service
-info "Installing TrainTracker systemd service..."
-cat > /etc/systemd/system/TrainTracker.service << EOF
+# Main display service
+info "Installing trainline systemd service..."
+cat > /etc/systemd/system/trainline.service << EOF
 [Unit]
 Description=Train Departure Display
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=$PROJECT_DIR/env/bin/python $PROJECT_DIR/train-tracker.py
+ExecStart=$PROJECT_DIR/env/bin/python $PROJECT_DIR/trainline.py
 WorkingDirectory=$PROJECT_DIR
-StandardOutput=append:$INSTALL_HOME/train.log
-StandardError=append:$INSTALL_HOME/train.log
+StandardOutput=append:$INSTALL_HOME/trainline.log
+StandardError=append:$INSTALL_HOME/trainline.log
 Restart=on-failure
 User=$INSTALL_USER
 Environment=PYTHONUNBUFFERED=1
@@ -104,18 +104,18 @@ WantedBy=multi-user.target
 EOF
 
 # Web configuration UI service
-info "Installing TrainTrackerWeb systemd service..."
-cat > /etc/systemd/system/TrainTrackerWeb.service << EOF
+info "Installing trainline-web systemd service..."
+cat > /etc/systemd/system/trainline-web.service << EOF
 [Unit]
-Description=Train Tracker Web Configuration UI
+Description=Trainline Web Configuration UI
 After=network.target
 
 [Service]
 Type=simple
 ExecStart=$PROJECT_DIR/env/bin/python $PROJECT_DIR/web_config.py
 WorkingDirectory=$PROJECT_DIR
-StandardOutput=append:$INSTALL_HOME/train-web.log
-StandardError=append:$INSTALL_HOME/train-web.log
+StandardOutput=append:$INSTALL_HOME/trainline-web.log
+StandardError=append:$INSTALL_HOME/trainline-web.log
 Restart=on-failure
 User=$INSTALL_USER
 Environment=PYTHONUNBUFFERED=1
@@ -128,12 +128,12 @@ systemctl daemon-reload
 
 # --- Step 6: Enable and start services ---
 info "Enabling services to start on boot..."
-systemctl enable TrainTracker.service > /dev/null 2>&1
-systemctl enable TrainTrackerWeb.service > /dev/null 2>&1
+systemctl enable trainline.service > /dev/null 2>&1
+systemctl enable trainline-web.service > /dev/null 2>&1
 
 # Start the web UI immediately so the user can configure credentials
 info "Starting web configuration UI..."
-systemctl start TrainTrackerWeb.service
+systemctl start trainline-web.service
 
 # Get the Pi's IP address for the user
 PI_IP=$(hostname -I | awk '{print $1}')
@@ -153,13 +153,13 @@ echo "     and choose your home station."
 echo "     (Register free at https://api.rtt.io/)"
 echo ""
 echo "  3. Save settings, then start the display:"
-echo -e "     ${YELLOW}sudo systemctl start TrainTracker.service${NC}"
+echo -e "     ${YELLOW}sudo systemctl start trainline.service${NC}"
 echo ""
 echo "  Both services will start automatically on boot."
 echo ""
 echo "  Useful commands:"
-echo "    Check display status:  sudo systemctl status TrainTracker"
-echo "    Check web UI status:   sudo systemctl status TrainTrackerWeb"
-echo "    View display logs:     tail -f $INSTALL_HOME/train.log"
-echo "    Restart after config:  sudo systemctl restart TrainTracker"
+echo "    Check display status:  sudo systemctl status trainline"
+echo "    Check web UI status:   sudo systemctl status trainline-web"
+echo "    View display logs:     tail -f $INSTALL_HOME/trainline.log"
+echo "    Restart after config:  sudo systemctl restart trainline"
 echo ""
