@@ -229,15 +229,14 @@ When the script finishes it will print the URL for the settings page.
 
 ## 7. Get Your API Credentials
 
-The display uses the **Realtime Trains API** to fetch live departure data.
-You need a free account.
+The display uses the **National Rail Darwin API** (via the Huxley2 JSON proxy)
+to fetch live departure data. You need a free API token.
 
-1. Go to **https://api.rtt.io/** in your browser (on your phone or computer,
-   not the Pi).
-2. Click **Register** and create an account.
-3. After registering, you will receive an **API username** and **API password**
-   (also called an API auth token). These are separate from your login password.
-4. Keep this page open — you will need these credentials in the next step.
+1. Go to **https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/** in your
+   browser (on your phone or computer, not the Pi).
+2. Fill in the registration form and submit.
+3. You will receive a **Darwin API token** (a GUID string) by email.
+4. Keep this token handy — you will need it in the next step.
 
 ---
 
@@ -269,8 +268,7 @@ Fill in at minimum:
 | Field | What to enter |
 |-------|---------------|
 | **Station Code** | The 3-letter CRS code for your station. See the table below. |
-| **Realtime Trains Username** | The API username from step 7. |
-| **Realtime Trains Password** | The API password from step 7. |
+| **Darwin API Token** | The API token from step 7. |
 
 All other settings have sensible defaults, but you can adjust:
 

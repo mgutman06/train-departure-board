@@ -7,17 +7,16 @@
 # EDI (Edinburgh), GLC (Glasgow Central), BRI (Bristol Temple Meads)
 STATION_CODE = "PAD"
 
-# Realtime Trains API credentials
-# Register for free at https://api.rtt.io/
-RTT_API_USERNAME = "your_rtt_username"
-RTT_API_PASSWORD = "your_rtt_password"
+# Darwin API token (National Rail Live Departure Boards)
+# Register for free at https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/
+DARWIN_API_TOKEN = "your_darwin_token"
+
+# Huxley2 API base URL (JSON proxy for Darwin)
+# Default public instance — you can self-host your own
+HUXLEY_URL = "https://huxley2.azurewebsites.net"
 
 # Maximum number of departures to display
 MAX_DEPARTURES = 10
-
-# How many services to fetch calling points for
-# (each requires an additional API call)
-MAX_CALLING_POINT_LOOKUPS = 6
 
 # Display settings
 BRIGHTNESS = 40

@@ -7,21 +7,15 @@ from urllib3.exceptions import NewConnectionError, MaxRetryError
 try:
     from config import (
         STATION_CODE,
-        RTT_API_USERNAME,
-        RTT_API_PASSWORD,
+        DARWIN_API_TOKEN,
+        HUXLEY_URL,
         MAX_DEPARTURES,
-        MAX_CALLING_POINT_LOOKUPS,
     )
 except (ModuleNotFoundError, NameError, ImportError):
     STATION_CODE = "PAD"
-    RTT_API_USERNAME = ""
-    RTT_API_PASSWORD = ""
+    DARWIN_API_TOKEN = ""
+    HUXLEY_URL = "https://huxley2.azurewebsites.net"
     MAX_DEPARTURES = 10
-    MAX_CALLING_POINT_LOOKUPS = 6
-
-RETRIES = 3
-RATE_LIMIT_DELAY = 0.5
-BASE_URL = "https://api.rtt.io/api/v1/json"
 
 
 class Departures:
@@ -43,80 +37,71 @@ class Departures:
         data = []
 
         try:
-            url = f"{BASE_URL}/search/{STATION_CODE}"
-            response = requests.get(
-                url,
-                auth=(RTT_API_USERNAME, RTT_API_PASSWORD),
-                timeout=15,
+            url = (
+                f"{HUXLEY_URL.rstrip('/')}/departures/{STATION_CODE}"
+                f"/{MAX_DEPARTURES}"
+                f"?accessToken={DARWIN_API_TOKEN}&expand=true"
             )
+            response = requests.get(url, timeout=15)
             response.raise_for_status()
             result = response.json()
 
-            station_name = result.get("location", {}).get("name", STATION_CODE)
-            services = result.get("services") or []
+            station_name = result.get("locationName", STATION_CODE)
+            services = result.get("trainServices") or []
 
             for service in services:
-                if service.get("serviceType") != "train":
-                    continue
-
-                loc = service.get("locationDetail", {})
-
                 # Get destination
-                destinations = loc.get("destination") or []
+                destinations = service.get("destination") or []
                 if not destinations:
                     continue
-                destination = destinations[0].get("description", "Unknown")
+                destination = destinations[0].get("locationName", "Unknown")
 
-                # Get times
-                booked_dep = loc.get("gbttBookedDeparture", "")
-                realtime_dep = loc.get("realtimeDeparture", "")
+                # Get times — std/etd are already formatted as "HH:MM"
+                scheduled = service.get("std", "")
+                etd = service.get("etd", "")
 
-                scheduled = self._format_time(booked_dep)
-                expected = self._format_time(realtime_dep)
-
-                # Get platform
-                platform = loc.get("platform", "")
-
-                # Determine status
-                display_as = loc.get("displayAs", "")
-                cancel_code = loc.get("cancelReasonCode")
-                cancelled = cancel_code is not None or display_as == "CANCELLED_CALL"
+                # Determine status from etd
+                # etd can be: "On time", "Delayed", "Cancelled", or a time like "09:30"
+                cancelled = service.get("isCancelled", False) or etd == "Cancelled"
 
                 if cancelled:
                     status = "Cancelled"
-                elif scheduled == expected or not expected:
+                elif etd == "On time":
                     status = "On time"
+                elif etd == "Delayed":
+                    status = "Delayed"
                 else:
-                    status = f"Exp {expected}"
+                    # etd is an actual time like "09:30"
+                    status = f"Exp {etd}"
 
-                # Get service UID and run date for calling points lookup
-                service_uid = service.get("serviceUid", "")
-                run_date = service.get("runDate", "")
+                # Get platform
+                platform = service.get("platform", "")
 
                 # Get operator
-                operator = service.get("atocName", "")
+                operator = service.get("operator", "")
+
+                # Get calling points from expanded response
+                calling_points = []
+                subsequent = service.get("subsequentCallingPoints")
+                if subsequent:
+                    # subsequentCallingPoints is a list of lists
+                    for point_list in subsequent:
+                        calling_point_items = point_list.get("callingPoint") or []
+                        for point in calling_point_items:
+                            name = point.get("locationName", "")
+                            if name:
+                                calling_points.append(name)
 
                 data.append({
                     "destination": destination,
                     "scheduled": scheduled,
-                    "expected": expected,
+                    "expected": etd if etd not in ("On time", "Delayed", "Cancelled") else "",
                     "platform": platform,
                     "status": status,
                     "cancelled": cancelled,
                     "operator": operator,
-                    "service_uid": service_uid,
-                    "run_date": run_date,
-                    "calling_points": [],
+                    "calling_points": calling_points,
                 })
-
-                if len(data) >= MAX_DEPARTURES:
-                    break
-
-            # Fetch calling points for top services
-            for dep in data[:MAX_CALLING_POINT_LOOKUPS]:
-                if dep["service_uid"] and dep["run_date"]:
-                    sleep(RATE_LIMIT_DELAY)
-                    self._fetch_calling_points(dep)
 
             with self._lock:
                 self._new_data = True
@@ -129,45 +114,6 @@ class Departures:
             with self._lock:
                 self._new_data = False
                 self._processing = False
-
-    def _fetch_calling_points(self, departure):
-        try:
-            date_str = departure["run_date"].replace("-", "/")
-            uid = departure["service_uid"]
-            url = f"{BASE_URL}/service/{uid}/{date_str}"
-            response = requests.get(
-                url,
-                auth=(RTT_API_USERNAME, RTT_API_PASSWORD),
-                timeout=10,
-            )
-            response.raise_for_status()
-            result = response.json()
-
-            locations = result.get("locations") or []
-            found_origin = False
-            calling_points = []
-
-            for loc in locations:
-                crs = loc.get("crs", "")
-                tiploc = loc.get("tiploc", "")
-
-                if crs == STATION_CODE or tiploc == STATION_CODE:
-                    found_origin = True
-                    continue
-
-                if found_origin and loc.get("isCall", False):
-                    calling_points.append(loc.get("description", "Unknown"))
-
-            departure["calling_points"] = calling_points
-
-        except Exception as e:
-            print(f"Error fetching calling points for {departure.get('service_uid')}: {e}")
-
-    @staticmethod
-    def _format_time(time_str):
-        if not time_str or len(time_str) < 4:
-            return ""
-        return f"{time_str[:2]}:{time_str[2:4]}"
 
     @property
     def new_data(self):

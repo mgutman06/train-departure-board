@@ -2,7 +2,7 @@
 
 A Raspberry Pi-powered LED matrix display that shows live UK train departure information, styled like the dot matrix displays found at railway stations across the United Kingdom.
 
-Uses the [Realtime Trains API](https://api.rtt.io/) for live departure data displayed on a 64x32 RGB LED matrix panel.
+Uses the [National Rail Darwin API](https://www.nationalrail.co.uk/developers/darwin-data-feeds/) via [Huxley2](https://github.com/jpsingleton/Huxley2) for live departure data displayed on a 64x32 RGB LED matrix panel.
 
 Based on the original [FlightTracker](https://github.com/ColinWaddell/FlightTracker) project by Colin Waddell.
 
@@ -73,8 +73,8 @@ pip install .
 
 ### 4. Get API credentials
 
-1. Register for a free account at [https://api.rtt.io/](https://api.rtt.io/)
-2. Note your API username and password
+1. Register for a free Darwin API token at [realtime.nationalrail.co.uk/OpenLDBWSRegistration](https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/)
+2. Note your API token (a GUID string)
 
 ### 5. Configure
 
@@ -89,15 +89,14 @@ Example configuration:
 # Station to display departures for (CRS code)
 STATION_CODE = "PAD"
 
-# Realtime Trains API credentials
-RTT_API_USERNAME = "your_rtt_username"
-RTT_API_PASSWORD = "your_rtt_password"
+# Darwin API token (National Rail Live Departure Boards)
+DARWIN_API_TOKEN = "your_darwin_token"
+
+# Huxley2 API base URL (JSON proxy for Darwin)
+HUXLEY_URL = "https://huxley2.azurewebsites.net"
 
 # Maximum number of departures to display
 MAX_DEPARTURES = 10
-
-# How many services to fetch calling points for
-MAX_CALLING_POINT_LOOKUPS = 6
 
 # Display settings
 BRIGHTNESS = 50
@@ -113,10 +112,9 @@ REFRESH_INTERVAL = 60
 | Variable                   | Description |
 |----------------------------|-------------|
 | `STATION_CODE`             | The CRS code of the station to show departures for. Find your station code at [National Rail](https://www.nationalrail.co.uk/). |
-| `RTT_API_USERNAME`         | Your Realtime Trains API username. Register at [api.rtt.io](https://api.rtt.io/). |
-| `RTT_API_PASSWORD`         | Your Realtime Trains API password. |
+| `DARWIN_API_TOKEN`         | Your Darwin API token. Register free at [realtime.nationalrail.co.uk](https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/). |
+| `HUXLEY_URL`               | Base URL of the Huxley2 JSON proxy. Default public instance works out of the box. |
 | `MAX_DEPARTURES`           | Maximum number of departures to fetch and cycle through. |
-| `MAX_CALLING_POINT_LOOKUPS`| How many services to fetch detailed calling points for (each is an API call). |
 | `BRIGHTNESS`               | Display brightness, range 0-100. |
 | `GPIO_SLOWDOWN`            | Range 0-4. Higher values reduce flickering on faster Pi models. |
 | `HAT_PWM_ENABLED`          | Set `True` if you've added the solder bridge for soundcard PWM. |
@@ -189,7 +187,7 @@ env/bin/python3 web_config.py
 Then open `http://<your-pi-ip>:5000` in a browser. From there you can change:
 
 - Station code
-- API username and password
+- Darwin API token and Huxley2 URL
 - Display brightness and GPIO settings
 - Refresh interval and departure limits
 

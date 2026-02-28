@@ -19,10 +19,9 @@ def save_config(data):
         f.write("# Trainline Configuration\n")
         f.write("# =======================\n\n")
         f.write(f'STATION_CODE = "{data["station_code"].strip().upper()}"\n\n')
-        f.write(f'RTT_API_USERNAME = "{data["rtt_username"].strip()}"\n')
-        f.write(f'RTT_API_PASSWORD = "{data["rtt_password"].strip()}"\n\n')
-        f.write(f"MAX_DEPARTURES = {int(data['max_departures'])}\n")
-        f.write(f"MAX_CALLING_POINT_LOOKUPS = {int(data['max_calling_points'])}\n\n")
+        f.write(f'DARWIN_API_TOKEN = "{data["darwin_token"].strip()}"\n\n')
+        f.write(f'HUXLEY_URL = "{data["huxley_url"].strip()}"\n\n')
+        f.write(f"MAX_DEPARTURES = {int(data['max_departures'])}\n\n")
         f.write(f"BRIGHTNESS = {int(data['brightness'])}\n")
         f.write(f"GPIO_SLOWDOWN = {int(data['gpio_slowdown'])}\n")
         f.write(f"HAT_PWM_ENABLED = {data['hat_pwm'] == 'True'}\n\n")
@@ -156,15 +155,16 @@ TEMPLATE = """
             <div class="card">
                 <h2>API Credentials</h2>
                 <div class="field">
-                    <label for="rtt_username">Realtime Trains Username</label>
-                    <input type="text" id="rtt_username" name="rtt_username"
-                           value="{{ c.RTT_API_USERNAME }}">
+                    <label for="darwin_token">Darwin API Token</label>
+                    <input type="password" id="darwin_token" name="darwin_token"
+                           value="{{ c.DARWIN_API_TOKEN }}">
+                    <div class="hint">Register free at realtime.nationalrail.co.uk/OpenLDBWSRegistration</div>
                 </div>
                 <div class="field">
-                    <label for="rtt_password">Realtime Trains Password</label>
-                    <input type="password" id="rtt_password" name="rtt_password"
-                           value="{{ c.RTT_API_PASSWORD }}">
-                    <div class="hint">Register free at api.rtt.io</div>
+                    <label for="huxley_url">Huxley2 URL</label>
+                    <input type="text" id="huxley_url" name="huxley_url"
+                           value="{{ c.HUXLEY_URL }}">
+                    <div class="hint">Default: https://huxley2.azurewebsites.net</div>
                 </div>
             </div>
 
@@ -201,15 +201,10 @@ TEMPLATE = """
                                value="{{ c.MAX_DEPARTURES }}" min="1" max="20">
                     </div>
                     <div class="field">
-                        <label for="max_calling_points">Calling Point Lookups</label>
-                        <input type="number" id="max_calling_points" name="max_calling_points"
-                               value="{{ c.MAX_CALLING_POINT_LOOKUPS }}" min="0" max="20">
+                        <label for="refresh_interval">Refresh Interval (seconds)</label>
+                        <input type="number" id="refresh_interval" name="refresh_interval"
+                               value="{{ c.REFRESH_INTERVAL }}" min="30" max="300">
                     </div>
-                </div>
-                <div class="field">
-                    <label for="refresh_interval">Refresh Interval (seconds)</label>
-                    <input type="number" id="refresh_interval" name="refresh_interval"
-                           value="{{ c.REFRESH_INTERVAL }}" min="30" max="300">
                 </div>
             </div>
 
