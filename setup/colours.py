@@ -1,4 +1,4 @@
-from rgbmatrix import graphics
+from setup.rgbcompat import graphics
 
 # Base colours
 BLACK = graphics.Color(0, 0, 0)

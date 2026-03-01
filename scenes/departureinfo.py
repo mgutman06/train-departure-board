@@ -1,7 +1,7 @@
 from utilities.animator import Animator
 from setup import colours, fonts, screen
 
-from rgbmatrix import graphics
+from setup.rgbcompat import graphics
 
 # Layout
 INFO_Y = 21
