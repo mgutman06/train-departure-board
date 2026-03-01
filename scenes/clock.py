@@ -3,7 +3,7 @@ from datetime import datetime
 from utilities.animator import Animator
 from setup import colours, fonts, frames
 
-from rgbmatrix import graphics
+from setup.rgbcompat import graphics
 
 # Setup
 CLOCK_FONT = fonts.regular

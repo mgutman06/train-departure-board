@@ -8,8 +8,7 @@ from scenes.callingpoints import CallingPointsScene
 from scenes.loadingpulse import LoadingPulseScene
 from scenes.loadingled import LoadingLEDScene
 from scenes.trainidle import TrainIdleScene
-from rgbmatrix import graphics
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
+from setup.rgbcompat import graphics, RGBMatrix, RGBMatrixOptions
 
 
 def services_match(services_a, services_b):

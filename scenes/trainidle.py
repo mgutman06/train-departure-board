@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from rgbmatrix import graphics
+from setup.rgbcompat import graphics
 
 from utilities.animator import Animator
 from setup import colours, fonts, screen
